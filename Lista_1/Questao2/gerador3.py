@@ -5,8 +5,8 @@ import numpy as np
 size = int(sys.argv[1])
 tipo = sys.argv[2]
 
-out_file_x = open('data_x-3'+tipo+'.txt', 'w')
-out_file_y = open('data_y-3'+tipo+'.txt', 'w')
+out_file_x = open('data/Q3/data_x-3'+tipo+'.txt', 'w')
+out_file_y = open('data/Q3/data_y-3'+tipo+'.txt', 'w')
 
 out_data = []
 
