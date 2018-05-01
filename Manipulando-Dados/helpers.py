@@ -18,11 +18,11 @@ def plot_dist(dataset, column, kind='kde'):
 
 def titanic_drops(dataset):
     drop_set = ['name', 'ticket', 'body',
-                'boat', 'cabin', 'home.dest', 'ticket']
+                'boat', 'cabin', 'home.dest', 'ticket', 'passengerid']
     drop = []
 
     for _, column in enumerate(dataset):
-        if column in drop_set:
+        if column.lower() in drop_set:
             drop.append(column)
 
     return dataset.drop(drop, axis=1)
@@ -64,12 +64,20 @@ def minmax_scaler(dataset, column):
 
 
 def drop_na_set(dataset):
-    dataset = drop_nan_row(dataset, 'pclass')
-    dataset = drop_nan_row(dataset, 'survived')
-    dataset = drop_nan_row(dataset, 'sex')
-    dataset = drop_nan_row(dataset, 'parch')
-    dataset = drop_nan_row(dataset, 'fare')
-    dataset = drop_nan_row(dataset, 'embarked')
+    try:
+        dataset = drop_nan_row(dataset, 'pclass')
+        dataset = drop_nan_row(dataset, 'survived')
+        dataset = drop_nan_row(dataset, 'sex')
+        dataset = drop_nan_row(dataset, 'parch')
+        dataset = drop_nan_row(dataset, 'fare')
+        dataset = drop_nan_row(dataset, 'embarked')
+    except KeyError:
+        dataset = drop_nan_row(dataset, 'Pclass')
+        dataset = drop_nan_row(dataset, 'Survived')
+        dataset = drop_nan_row(dataset, 'Sex')
+        dataset = drop_nan_row(dataset, 'Parch')
+        dataset = drop_nan_row(dataset, 'Fare')
+        dataset = drop_nan_row(dataset, 'Embarked')
 
     return dataset
 
@@ -77,14 +85,26 @@ def drop_na_set(dataset):
 def titanic_preprocessing_pipeline(dataset):
     dataset = drop_na_set(dataset)
 
-    dataset['age'] = fill_estimate(dataset, 'age')
+    try:
+        dataset.loc[:, 'age'] = fill_estimate(dataset, 'age')
 
-    dataset = titanic_drops(dataset)
+        dataset = titanic_drops(dataset)
 
-    label_encoder(dataset, 'sex')
-    label_encoder(dataset, 'embarked')
+        label_encoder(dataset, 'sex')
+        label_encoder(dataset, 'embarked')
 
-    minmax_scaler(dataset, 'age')
-    minmax_scaler(dataset, 'fare')
+        minmax_scaler(dataset, 'age')
+        minmax_scaler(dataset, 'fare')
+
+    except KeyError:
+        dataset.loc[:, 'Age'] = fill_estimate(dataset, 'Age')
+
+        dataset = titanic_drops(dataset)
+
+        label_encoder(dataset, 'Sex')
+        label_encoder(dataset, 'Embarked')
+
+        minmax_scaler(dataset, 'Age')
+        minmax_scaler(dataset, 'Fare')
 
     return dataset
