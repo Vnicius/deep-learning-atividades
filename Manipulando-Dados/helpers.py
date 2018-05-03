@@ -1,7 +1,10 @@
+import re
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 
 def remove_outliers(dataset, column, threshold=3):
@@ -17,7 +20,7 @@ def plot_dist(dataset, column, kind='kde'):
 
 
 def titanic_drops(dataset):
-    drop_set = ['name', 'ticket', 'body',
+    drop_set = ['ticket', 'body',
                 'boat', 'cabin', 'home.dest', 'ticket', 'passengerid']
     drop = []
 
@@ -34,6 +37,15 @@ def fill_estimate(dataset, column):
 
 def drop_nan_row(dataset, column):
     return dataset.dropna(subset=[column])
+
+def name_replace(dataset):
+    name = re.compile(" (\w+\.)")
+    names = []
+
+    for n in dataset['name']:
+        names.append(name.search(n).group(1))
+
+    return np.array(names);
 
 
 def label_encoder(dataset, column):
@@ -62,49 +74,70 @@ def minmax_scaler(dataset, column):
 
     dataset[column] = scaled
 
+def standard_scaler(dataset, column):
+    standardScaler = StandardScaler()
+
+    scaled = standardScaler.fit_transform(dataset[column].values.reshape(-1, 1))
+
+    dataset[column] = scaled
+
 
 def drop_na_set(dataset):
-    try:
-        dataset = drop_nan_row(dataset, 'pclass')
-        dataset = drop_nan_row(dataset, 'survived')
-        dataset = drop_nan_row(dataset, 'sex')
-        dataset = drop_nan_row(dataset, 'parch')
-        dataset = drop_nan_row(dataset, 'fare')
-        dataset = drop_nan_row(dataset, 'embarked')
-    except KeyError:
-        dataset = drop_nan_row(dataset, 'Pclass')
-        dataset = drop_nan_row(dataset, 'Survived')
-        dataset = drop_nan_row(dataset, 'Sex')
-        dataset = drop_nan_row(dataset, 'Parch')
-        dataset = drop_nan_row(dataset, 'Fare')
-        dataset = drop_nan_row(dataset, 'Embarked')
+    dataset = drop_nan_row(dataset, 'pclass')
+    dataset = drop_nan_row(dataset, 'survived')
+    dataset = drop_nan_row(dataset, 'sex')
+    dataset = drop_nan_row(dataset, 'parch')
+    dataset = drop_nan_row(dataset, 'fare')
+    dataset = drop_nan_row(dataset, 'embarked')
 
     return dataset
 
 
-def titanic_preprocessing_pipeline(dataset):
+def titanic_preprocessing_pipeline(dataset, scaler='minmax'):
     dataset = drop_na_set(dataset)
 
-    try:
-        dataset.loc[:, 'age'] = fill_estimate(dataset, 'age')
+    dataset.loc[:, 'age'] = fill_estimate(dataset, 'age')
+    dataset['name'] = name_replace(dataset)
 
-        dataset = titanic_drops(dataset)
+    dataset = titanic_drops(dataset)
 
-        label_encoder(dataset, 'sex')
-        label_encoder(dataset, 'embarked')
+    label_encoder(dataset, 'sex')
+    label_encoder(dataset, 'embarked')
+    label_encoder(dataset, 'name')
 
+    if scaler == 'minmax':
         minmax_scaler(dataset, 'age')
         minmax_scaler(dataset, 'fare')
+        minmax_scaler(dataset, 'sibsp')
+        minmax_scaler(dataset, 'parch')
+        minmax_scaler(dataset, 'pclass')
+        minmax_scaler(dataset, 'sex')
+        minmax_scaler(dataset, 'embarked')
+        minmax_scaler(dataset, 'name') 
+    
+    elif scaler == 'standard':
+        standard_scaler(dataset, 'age')
+        standard_scaler(dataset, 'fare')
+        standard_scaler(dataset, 'sibsp')
+        standard_scaler(dataset, 'parch')
+        standard_scaler(dataset, 'pclass')
+        standard_scaler(dataset, 'sex')
+        standard_scaler(dataset, 'embarked')
+        standard_scaler(dataset, 'name')        
 
-    except KeyError:
-        dataset.loc[:, 'Age'] = fill_estimate(dataset, 'Age')
-
-        dataset = titanic_drops(dataset)
-
-        label_encoder(dataset, 'Sex')
-        label_encoder(dataset, 'Embarked')
-
-        minmax_scaler(dataset, 'Age')
-        minmax_scaler(dataset, 'Fare')
 
     return dataset
+
+def plot_acc_loss(acc, loss):
+    plt.figure(figsize=(16,6))
+    plt.subplot(1,2,1)
+    plt.plot(acc)
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.subplot(1,2,2)
+    plt.plot(loss)
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.show()
